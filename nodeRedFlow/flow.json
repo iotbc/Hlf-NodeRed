@@ -1,0 +1,171 @@
+[
+    {
+        "id": "8db94c69.db0c6",
+        "type": "tab",
+        "label": "Flow 2"
+    },
+    {
+        "id": "31bc676.477a798",
+        "type": "inject",
+        "z": "8db94c69.db0c6",
+        "name": "",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "x": 132.01953125,
+        "y": 534.00390625,
+        "wires": [
+            [
+                "8694ca6c.c67678"
+            ]
+        ]
+    },
+    {
+        "id": "8694ca6c.c67678",
+        "type": "exec",
+        "z": "8db94c69.db0c6",
+        "command": "candump can0",
+        "addpay": false,
+        "append": "",
+        "useSpawn": "true",
+        "timer": "",
+        "oldrc": false,
+        "name": "CANRead",
+        "x": 315.0251693725586,
+        "y": 534.1572933197021,
+        "wires": [
+            [
+                "8e09700c.291e5"
+            ],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "8e09700c.291e5",
+        "type": "function",
+        "z": "8db94c69.db0c6",
+        "name": "CANOutput",
+        "func": "str = msg.payload;\nid = parseInt(str.substring(8,11));\nhexData = str.substring(19,21) + str.substring(22,24) + \n    str.substring(25,27) + str.substring(28,30);\nsensorVal = hex2int(hexData);\nmsg.payload = sensorVal;\nvar msg = { payload: id, sensorID: id, sensorValue: sensorVal };\n\nreturn msg;\n\nfunction hex2string(hex) {\n    var str = '';\n    for (var i = 0; i < hex.length; i += 2)\n        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));\n    return str;\n}\n\nfunction hex2int(hex){\n    numToDecimal = (parseInt(hex, 16));\n    return numToDecimal;\n}",
+        "outputs": "1",
+        "noerr": 0,
+        "x": 532.0196990966797,
+        "y": 393.62618827819824,
+        "wires": [
+            [
+                "70c62f19.65db8"
+            ]
+        ]
+    },
+    {
+        "id": "70c62f19.65db8",
+        "type": "switch",
+        "z": "8db94c69.db0c6",
+        "name": "SensorSwitch",
+        "property": "sensorID",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "2",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "outputs": 3,
+        "x": 716.7013168334961,
+        "y": 542.4015941619873,
+        "wires": [
+            [
+                "7b64cb07.543f04"
+            ],
+            [
+                "7b64cb07.543f04"
+            ],
+            [
+                "7b64cb07.543f04"
+            ]
+        ]
+    },
+    {
+        "id": "7b64cb07.543f04",
+        "type": "function",
+        "z": "8db94c69.db0c6",
+        "name": "DataCollector",
+        "func": "context.temp = context.temp || 0.0;\ncontext.ldr = context.ldr || 0.0;\n\nif (msg.sensorID === 0) {\n  context.temp = msg.sensorValue/100;\n} else if (msg.sensorID === 1) {\n  context.ldr = msg.sensorValue;\n}\n\nmsg = { payload: \n\n    {\n        \"$class\": \"org.acme.testnetwork.UpdateSensorData\",\n        \"sampDevice\": \"yourDeviceName\",\n        \"newTempVal\":context.temp, \n        \"newLightVal\":context.ldr\n        // update yourDeviceName\n        \n        \n    }\n    \n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 981.6953964233398,
+        "y": 546.5123348236084,
+        "wires": [
+            [
+                "49e56194.9c681"
+            ]
+        ]
+    },
+    {
+        "id": "49e56194.9c681",
+        "type": "delay",
+        "z": "8db94c69.db0c6",
+        "name": "",
+        "pauseType": "rate",
+        "timeout": "1.5",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "15",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": true,
+        "x": 1189.7069244384766,
+        "y": 547.4754543304443,
+        "wires": [
+            [
+                "4fa4b4dc.981ffc"
+            ]
+        ]
+    },
+    {
+        "id": "1ed3c535.606f1b",
+        "type": "debug",
+        "z": "8db94c69.db0c6",
+        "name": "",
+        "active": true,
+        "console": "false",
+        "complete": "false",
+        "x": 1247.1367645263672,
+        "y": 855.6875267028809,
+        "wires": []
+    },
+    {
+        "id": "4fa4b4dc.981ffc",
+        "type": "http request",
+        "z": "8db94c69.db0c6",
+        "name": "",
+        "method": "POST",
+        "ret": "txt",
+        "url": "http://54.94.182.119:3000/api/UpdateSensorData",
+        "tls": "",
+        "x": 945.01953125,
+        "y": 780.00390625,
+        "wires": [
+            [
+                "1ed3c535.606f1b"
+            ]
+        ]
+    }
+]
